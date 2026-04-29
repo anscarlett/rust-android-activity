@@ -1,0 +1,160 @@
+name: Android APK
+
+on:
+  push:
+    branches: "*"
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-apk:
+    name: Build Android APKs
+    runs-on: ubuntu-22.04
+
+    steps:
+      # -----------------------------------------------------------------------
+      # Checkout
+      # -----------------------------------------------------------------------
+      - uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # Java
+      # -----------------------------------------------------------------------
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # -----------------------------------------------------------------------
+      # Android SDK / NDK
+      # -----------------------------------------------------------------------
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android NDK and build-tools
+        run: |
+          sdkmanager --install "ndk;27.2.12479018" "build-tools;35.0.0" "platforms;android-35"
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/27.2.12479018" >> "$GITHUB_ENV"
+          echo "NDK_HOME=$ANDROID_SDK_ROOT/ndk/27.2.12479018" >> "$GITHUB_ENV"
+
+      # -----------------------------------------------------------------------
+      # Rust
+      # -----------------------------------------------------------------------
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Add Android targets
+        run: rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
+
+      - name: Install cargo-ndk
+        run: cargo install cargo-ndk --locked
+
+      # -----------------------------------------------------------------------
+      # Cargo cache
+      # -----------------------------------------------------------------------
+      - name: Cache Cargo registry + git sources
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Cache Cargo build artefacts
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-android-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-build-android-
+
+      # -----------------------------------------------------------------------
+      # Gradle cache
+      # -----------------------------------------------------------------------
+      - name: Cache Gradle wrapper
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+
+      - name: Cache Gradle caches
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-caches-${{ hashFiles('**/*.gradle') }}
+          restore-keys: ${{ runner.os }}-gradle-caches-
+
+      # -----------------------------------------------------------------------
+      # GameActivity variant
+      # -----------------------------------------------------------------------
+      - name: Build Rust cdylib – GameActivity
+        working-directory: crates/android-game-activity
+        run: |
+          cargo ndk \
+            -t arm64-v8a \
+            -t armeabi-v7a \
+            -t x86_64 \
+            -o ../../android/game-activity/app/src/main/jniLibs/ \
+            -- build --release
+
+      - name: Build GameActivity APK (debug)
+        working-directory: android/game-activity
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Build GameActivity APK (release unsigned)
+        working-directory: android/game-activity
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Upload GameActivity debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: bevy-shapes-game-activity-debug
+          path: android/game-activity/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Upload GameActivity release APK (unsigned)
+        uses: actions/upload-artifact@v4
+        with:
+          name: bevy-shapes-game-activity-release-unsigned
+          path: android/game-activity/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+      # -----------------------------------------------------------------------
+      # NativeActivity variant
+      # -----------------------------------------------------------------------
+      - name: Build Rust cdylib – NativeActivity
+        working-directory: crates/android-native-activity
+        run: |
+          cargo ndk \
+            -t arm64-v8a \
+            -t armeabi-v7a \
+            -t x86_64 \
+            -o ../../android/native-activity/app/src/main/jniLibs/ \
+            -- build --release
+
+      - name: Build NativeActivity APK (debug)
+        working-directory: android/native-activity
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Build NativeActivity APK (release unsigned)
+        working-directory: android/native-activity
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Upload NativeActivity debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: bevy-shapes-native-activity-debug
+          path: android/native-activity/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Upload NativeActivity release APK (unsigned)
+        uses: actions/upload-artifact@v4
+        with:
+          name: bevy-shapes-native-activity-release-unsigned
+          path: android/native-activity/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error

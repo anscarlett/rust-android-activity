@@ -1,0 +1,26 @@
+[package]
+name = "android-native-activity"
+version = "0.1.0"
+edition = "2021"
+
+# Android cdylib launcher – NativeActivity backend.
+# This crate is compiled as a shared library that is loaded by the
+# Android NativeActivity class at runtime (via the `android.app.lib_name`
+# meta-data in AndroidManifest.xml).
+
+[lib]
+name = "bevy_shapes_native"
+crate-type = ["cdylib"]
+
+[dependencies]
+app = { path = "../app" }
+
+# android-activity resolves to the workspace-patched local version.
+android-activity = { version = "0.6", features = ["native-activity"] }
+
+# Add the NativeActivity backend and Android shared C++ STL on top of the
+# features already declared by `crates/app`.
+bevy = { version = "0.15", default-features = false, features = [
+    "android-native-activity",
+    "android_shared_stdcxx",
+] }

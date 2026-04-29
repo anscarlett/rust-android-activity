@@ -1,0 +1,25 @@
+[package]
+name = "android-game-activity"
+version = "0.1.0"
+edition = "2021"
+
+# Android cdylib launcher – GameActivity backend.
+# This crate is compiled as a shared library that is loaded by the
+# Android GameActivity Java class at runtime.
+
+[lib]
+name = "bevy_shapes_game"
+crate-type = ["cdylib"]
+
+[dependencies]
+app = { path = "../app" }
+
+# android-activity resolves to the workspace-patched local version.
+android-activity = { version = "0.6", features = ["game-activity"] }
+
+# Add the GameActivity backend and Android shared C++ STL on top of the
+# features already declared by `crates/app`.
+bevy = { version = "0.15", default-features = false, features = [
+    "android-game-activity",
+    "android_shared_stdcxx",
+] }

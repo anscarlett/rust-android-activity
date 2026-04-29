@@ -1,0 +1,26 @@
+[package]
+name = "app"
+version = "0.1.0"
+edition = "2021"
+
+# Shared Bevy application logic.  No Android-specific code lives here;
+# platform launchers (android-game-activity, android-native-activity, desktop)
+# depend on this crate and add the platform-specific entry points and features.
+
+[dependencies]
+# Core 3D rendering features that every platform launcher needs.
+# Android and desktop platform-specific features are added by the launchers.
+bevy = { version = "0.15", default-features = false, features = [
+    "bevy_asset",
+    "bevy_color",
+    "bevy_core_pipeline",
+    "bevy_pbr",
+    "bevy_render",
+    "bevy_scene",
+    "bevy_winit",
+    "bevy_window",
+    "default_font",
+    "tonemapping_luts",
+    "multi_threaded",
+    "png",
+] }

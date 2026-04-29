@@ -1,0 +1,35 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    compileSdk = 35
+
+    defaultConfig {
+        applicationId = "com.github.rust_mobile.bevyshapesnative"
+        minSdk = 31
+        targetSdk = 35
+        versionCode = 1
+        versionName = "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled = false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig = null  // unsigned release APK
+        }
+        debug {
+            minifyEnabled = false
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    namespace = 'com.github.rust_mobile.bevyshapesnative'
+}
+
+// NativeActivity is provided by the Android OS – no extra dependencies needed.
+dependencies {
+}
