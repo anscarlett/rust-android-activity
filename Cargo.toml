@@ -1,5 +1,21 @@
 [workspace]
 resolver = "2"
-members = ["android-activity"]
+members = [
+    "android-activity",
+    "crates/app",
+    "crates/android-game-activity",
+    "crates/android-native-activity",
+    "crates/desktop",
+]
+
+# When no package is specified on the command line, only operate on the
+# android-activity library (preserves the existing CI behaviour).
+default-members = ["android-activity"]
 
 exclude = ["examples"]
+
+# Pin all crates in this workspace to the local android-activity so that
+# Bevy's transitive dependency on android-activity resolves to the same
+# crate instance (and therefore the same AndroidApp type).
+[patch.crates-io]
+android-activity = { path = "android-activity" }

@@ -1,0 +1,19 @@
+[package]
+name = "desktop"
+version = "0.1.0"
+edition = "2021"
+
+# Desktop binary target (Linux / macOS / Windows).
+# Run with:  cargo run -p desktop
+
+[[bin]]
+name = "desktop"
+path = "src/main.rs"
+
+[dependencies]
+app = { path = "../app" }
+
+# Add desktop windowing on top of the features declared in crates/app.
+# Switch to "wayland" if you prefer the Wayland backend on Linux.
+[target.'cfg(target_os = "linux")'.dependencies]
+bevy = { version = "0.15", default-features = false, features = ["x11"] }
